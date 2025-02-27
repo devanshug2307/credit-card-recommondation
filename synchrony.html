@@ -1,0 +1,3517 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Credit Card Reward Optimizer</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Add Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --synchrony-charcoal: #333f48;
+        --synchrony-yellow: #ffb81c;
+        --synchrony-light-gray: #f5f6f7;
+        --synchrony-blue: #0076be;
+      }
+
+      body {
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        color: var(--synchrony-charcoal);
+      }
+
+      .card-item {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      .card-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .best-card {
+        border-color: var(--synchrony-yellow);
+        border-width: 2px;
+        position: relative;
+      }
+
+      .best-card::before {
+        content: "Best Match";
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--synchrony-yellow);
+        color: var(--synchrony-charcoal);
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .category-pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 14px;
+        margin-right: 4px;
+        margin-bottom: 4px;
+        background-color: var(--synchrony-light-gray);
+        color: var(--synchrony-charcoal);
+      }
+
+      .reward-bar {
+        height: 8px;
+        background: var(--synchrony-light-gray);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .reward-bar-fill {
+        height: 100%;
+        background: var(--synchrony-yellow);
+        transition: width 0.6s ease;
+      }
+
+      /* Remove the input-group styles since we're using inline dollar signs */
+      input[type="number"] {
+        padding-left: 1.5rem;
+        border-radius: 8px;
+        border: 2px solid var(--synchrony-light-gray);
+      }
+
+      input[type="number"]:focus {
+        border-color: var(--synchrony-yellow);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 184, 28, 0.2);
+      }
+
+      .profile-button {
+        transition: all 0.2s ease;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .profile-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .profile-button.active {
+        background-color: var(--synchrony-yellow) !important;
+      }
+
+      .profile-button.active span,
+      .profile-button.active p {
+        color: var(--synchrony-charcoal) !important;
+      }
+
+      .profile-button.active svg {
+        color: var(--synchrony-charcoal) !important;
+      }
+
+      .profile-button::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 24px 24px 0;
+        border-color: transparent var(--synchrony-yellow) transparent
+          transparent;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .profile-button.active::after {
+        opacity: 1;
+      }
+
+      .btn-primary {
+        background-color: var(--synchrony-yellow);
+        color: var(--synchrony-charcoal);
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary:hover {
+        background-color: #e5a619;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background-color: white;
+        color: var(--synchrony-charcoal);
+        border: 2px solid var(--synchrony-yellow);
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--synchrony-light-gray);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <header class="bg-white shadow-sm py-6 sticky top-0 z-50">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center">
+          <h1
+            class="text-2xl font-bold"
+            style="color: var(--synchrony-charcoal)"
+          >
+            Synchrony Card Optimizer
+          </h1>
+          <nav class="flex items-center space-x-8">
+            <a
+              href="#calculator"
+              class="text-gray-600 hover:text-yellow-500 transition-colors font-medium"
+              style="color: var(--synchrony-charcoal)"
+              >Calculator</a
+            >
+            <a
+              href="#how-it-works"
+              class="text-gray-600 hover:text-yellow-500 transition-colors font-medium"
+              style="color: var(--synchrony-charcoal)"
+              >How It Works</a
+            >
+            <a
+              href="#cards"
+              class="text-gray-600 hover:text-yellow-500 transition-colors font-medium"
+              style="color: var(--synchrony-charcoal)"
+              >All Cards</a
+            >
+            <button onclick="scrollToCalculator()" class="btn-primary">
+              Get Started
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-12">
+      <!-- Hero Section -->
+      <section id="hero" class="mb-20">
+        <div class="max-w-4xl mx-auto text-center">
+          <h1
+            class="text-5xl font-bold mb-6"
+            style="color: var(--synchrony-charcoal)"
+          >
+            Find Your Perfect Synchrony Card
+          </h1>
+          <p class="text-xl mb-10" style="color: var(--synchrony-charcoal)">
+            Compare 24+ cards and get personalized recommendations based on your
+            spending
+          </p>
+          <div class="flex justify-center gap-6">
+            <button
+              onclick="scrollToCalculator()"
+              class="btn-primary flex items-center"
+            >
+              Start Optimizing
+              <svg
+                class="w-5 h-5 ml-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+            </button>
+            <a href="#how-it-works" class="btn-secondary"> Learn More </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results Section (Initially Hidden) -->
+      <section id="results" class="hidden scroll-mt-20">
+        <!-- Results content will be dynamically populated -->
+      </section>
+
+      <!-- Calculator Section -->
+      <section id="calculator" class="mb-16 scroll-mt-20">
+        <div class="max-w-4xl mx-auto">
+          <div class="report-content">
+            <!-- Credit Score Input Section -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+              <div
+                class="p-8"
+                style="background-color: var(--synchrony-light-gray)"
+              >
+                <h2 class="text-3xl font-bold mb-8 text-center">
+                  Credit Card Reward Calculator
+                </h2>
+
+                <!-- Credit Score Impact Simulator -->
+                <div class="mb-8">
+                  <h3 class="text-xl font-semibold mb-4">
+                    Advanced Credit Score Impact Simulator
+                  </h3>
+                  <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <!-- Left Column - Inputs and Basic Results -->
+                      <div>
+                        <div class="mb-6">
+                          <h4 class="text-lg font-medium mb-4">
+                            Current Credit Profile
+                          </h4>
+                          <div class="space-y-4">
+                            <div>
+                              <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Current Credit Score</label
+                              >
+                              <div class="relative">
+                                <input
+                                  type="number"
+                                  id="current-score"
+                                  min="300"
+                                  max="850"
+                                  class="w-full p-2 border rounded pl-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                                  onchange="updateDetailedCreditImpact()"
+                                  placeholder="Enter score (300-850)"
+                                />
+                                <div
+                                  class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
+                                >
+                                  <span class="text-gray-500 text-sm"
+                                    >FICO</span
+                                  >
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Recent Credit Applications</label
+                              >
+                              <div class="relative">
+                                <input
+                                  type="number"
+                                  id="recent-applications"
+                                  min="0"
+                                  max="10"
+                                  class="w-full p-2 border rounded pl-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                                  onchange="updateDetailedCreditImpact()"
+                                  placeholder="Number of applications"
+                                />
+                                <div
+                                  class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
+                                >
+                                  <span class="text-gray-500 text-sm"
+                                    >Last 12mo</span
+                                  >
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Credit Utilization</label
+                              >
+                              <div class="relative">
+                                <input
+                                  type="number"
+                                  id="credit-utilization"
+                                  min="0"
+                                  max="100"
+                                  class="w-full p-2 border rounded pl-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                                  onchange="updateDetailedCreditImpact()"
+                                  placeholder="Current utilization percentage"
+                                />
+                                <div
+                                  class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
+                                >
+                                  <span class="text-gray-500 text-sm">%</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label
+                                class="block text-sm font-medium text-gray-700 mb-2"
+                                >Average Account Age</label
+                              >
+                              <div class="relative">
+                                <input
+                                  type="number"
+                                  id="account-age"
+                                  min="0"
+                                  max="30"
+                                  class="w-full p-2 border rounded pl-3 focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                                  onchange="updateDetailedCreditImpact()"
+                                  placeholder="Years"
+                                />
+                                <div
+                                  class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none"
+                                >
+                                  <span class="text-gray-500 text-sm"
+                                    >Years</span
+                                  >
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Credit Score Category -->
+                        <div
+                          class="mb-6 p-4 rounded-lg"
+                          id="score-category-section"
+                        >
+                          <!-- Will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Impact Analysis -->
+                        <div class="mb-6">
+                          <h4 class="text-lg font-medium mb-4">
+                            Impact Analysis
+                          </h4>
+                          <div id="credit-impact-result" class="space-y-4">
+                            <!-- Will be populated by JavaScript -->
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Right Column - Visualizations -->
+                      <div class="space-y-6">
+                        <!-- Score Timeline Chart -->
+                        <div class="h-64">
+                          <canvas id="creditScoreChart"></canvas>
+                        </div>
+
+                        <!-- FICO Factors Chart -->
+                        <div class="h-64">
+                          <canvas id="ficoFactorsChart"></canvas>
+                        </div>
+
+                        <!-- Score Distribution Chart -->
+                        <div class="h-64">
+                          <canvas id="scoreDistributionChart"></canvas>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Credit Score Factors Breakdown -->
+                    <div class="mt-8">
+                      <h4 class="text-lg font-medium mb-4">
+                        Credit Score Factors Breakdown
+                      </h4>
+                      <div
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                        id="factors-breakdown"
+                      >
+                        <!-- Will be populated by JavaScript -->
+                      </div>
+
+                      <!-- Download PDF Button -->
+                      <div class="mt-8 flex justify-center">
+                        <button
+                          id="downloadPdfBtn"
+                          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg flex items-center space-x-2 transition duration-200"
+                          onclick="generatePDF()"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          <span>Download Credit Score Report</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                  <div
+                    class="p-8"
+                    style="background-color: var(--synchrony-light-gray)"
+                  >
+                    <h2
+                      class="text-3xl font-bold mb-3"
+                      style="color: var(--synchrony-charcoal)"
+                    >
+                      Personalized Card Recommendations
+                    </h2>
+                    <p style="color: var(--synchrony-charcoal)">
+                      Tell us about your monthly spending habits to find your
+                      best card match
+                    </p>
+                  </div>
+
+                  <!-- Real-time Spending Summary -->
+                  <div
+                    class="bg-white px-8 py-6 border-b"
+                    style="border-color: var(--synchrony-light-gray)"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p
+                          class="text-sm font-medium mb-1"
+                          style="color: var(--synchrony-charcoal)"
+                        >
+                          Total Monthly Spending
+                        </p>
+                        <p
+                          id="total-spend"
+                          class="text-3xl font-bold"
+                          style="color: var(--synchrony-yellow)"
+                        >
+                          $0
+                        </p>
+                      </div>
+                      <div class="text-right">
+                        <p
+                          class="text-sm font-medium mb-1"
+                          style="color: var(--synchrony-charcoal)"
+                        >
+                          Estimated Annual Rewards
+                        </p>
+                        <p
+                          id="estimated-rewards"
+                          class="text-3xl font-bold"
+                          style="color: var(--synchrony-yellow)"
+                        >
+                          $0
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Spending Profiles -->
+                  <div
+                    class="p-8"
+                    style="border-color: var(--synchrony-light-gray)"
+                  >
+                    <p
+                      class="text-xl font-medium mb-6"
+                      style="color: var(--synchrony-charcoal)"
+                    >
+                      Quick Start with Spending Profiles:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <!-- Average Spender -->
+                      <button
+                        type="button"
+                        onclick="applyPreset('average')"
+                        class="profile-button p-6 text-left"
+                        style="background-color: var(--synchrony-light-gray)"
+                      >
+                        <div class="flex items-center gap-3 mb-3">
+                          <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            style="color: var(--synchrony-charcoal)"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                          </svg>
+                          <span
+                            class="font-semibold"
+                            style="color: var(--synchrony-charcoal)"
+                            >Average Spender</span
+                          >
+                        </div>
+                        <p
+                          class="text-sm"
+                          style="color: var(--synchrony-charcoal)"
+                        >
+                          Balanced spending across categories
+                        </p>
+                      </button>
+
+                      <!-- Homeowner -->
+                      <button
+                        type="button"
+                        onclick="applyPreset('homeowner')"
+                        class="profile-button p-6 text-left"
+                        style="background-color: var(--synchrony-light-gray)"
+                      >
+                        <div class="flex items-center gap-3 mb-3">
+                          <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            style="color: var(--synchrony-charcoal)"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                            />
+                          </svg>
+                          <span
+                            class="font-semibold"
+                            style="color: var(--synchrony-charcoal)"
+                            >Homeowner</span
+                          >
+                        </div>
+                        <p
+                          class="text-sm"
+                          style="color: var(--synchrony-charcoal)"
+                        >
+                          Higher spending on home improvement
+                        </p>
+                      </button>
+
+                      <!-- Frequent Traveler -->
+                      <button
+                        type="button"
+                        onclick="applyPreset('traveler')"
+                        class="profile-button p-6 text-left"
+                        style="background-color: var(--synchrony-light-gray)"
+                      >
+                        <div class="flex items-center gap-3 mb-3">
+                          <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            style="color: var(--synchrony-charcoal)"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <span
+                            class="font-semibold"
+                            style="color: var(--synchrony-charcoal)"
+                            >Frequent Traveler</span
+                          >
+                        </div>
+                        <p
+                          class="text-sm"
+                          style="color: var(--synchrony-charcoal)"
+                        >
+                          Focus on travel and dining expenses
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Spending Categories Form -->
+                  <div class="p-6">
+                    <form
+                      id="spending-form"
+                      class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
+                      <!-- General Purchases -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full"
+                            style="
+                              background-color: var(--synchrony-light-gray);
+                            "
+                          >
+                            <svg
+                              class="w-6 h-6 m-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label
+                              class="block font-medium"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              General Purchases
+                            </label>
+                            <p
+                              class="text-sm"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Groceries, dining, entertainment
+                            </p>
+                          </div>
+                        </div>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            name="general"
+                            value="0"
+                            class="w-full p-3 pl-8"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span style="color: var(--synchrony-charcoal)"
+                              >$</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Home Improvement -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full"
+                            style="
+                              background-color: var(--synchrony-light-gray);
+                            "
+                          >
+                            <svg
+                              class="w-6 h-6 m-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label
+                              class="block font-medium"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Home Improvement
+                            </label>
+                            <p
+                              class="text-sm"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Hardware, furniture, repairs
+                            </p>
+                          </div>
+                        </div>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            name="home"
+                            value="0"
+                            class="w-full p-3 pl-8"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span style="color: var(--synchrony-charcoal)"
+                              >$</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Gas & Auto -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center"
+                          >
+                            <svg
+                              class="w-6 h-6 text-red-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label class="block text-gray-700 font-medium"
+                              >Gas & Auto Services</label
+                            >
+                            <p class="text-sm text-gray-500">
+                              Fuel, maintenance, repairs
+                            </p>
+                          </div>
+                        </div>
+                        <div class="input-group relative">
+                          <input
+                            type="number"
+                            name="auto"
+                            value="0"
+                            class="w-full p-3 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span class="text-gray-500">$</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Healthcare -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full"
+                            style="
+                              background-color: var(--synchrony-light-gray);
+                            "
+                          >
+                            <svg
+                              class="w-6 h-6 m-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label
+                              class="block font-medium"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Healthcare
+                            </label>
+                            <p
+                              class="text-sm"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Medical expenses, pharmacy
+                            </p>
+                          </div>
+                        </div>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            name="healthcare"
+                            value="0"
+                            class="w-full p-3 pl-8"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span style="color: var(--synchrony-charcoal)"
+                              >$</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Retail -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center"
+                          >
+                            <svg
+                              class="w-6 h-6 text-yellow-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label class="block text-gray-700 font-medium"
+                              >Retail Shopping</label
+                            >
+                            <p class="text-sm text-gray-500">
+                              Clothing, electronics, gifts
+                            </p>
+                          </div>
+                        </div>
+                        <div class="input-group relative">
+                          <input
+                            type="number"
+                            name="retail"
+                            value="0"
+                            class="w-full p-3 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span class="text-gray-500">$</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Other -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
+                          >
+                            <svg
+                              class="w-6 h-6 text-gray-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label class="block text-gray-700 font-medium"
+                              >Other Expenses</label
+                            >
+                            <p class="text-sm text-gray-500">
+                              Miscellaneous spending
+                            </p>
+                          </div>
+                        </div>
+                        <div class="input-group relative">
+                          <input
+                            type="number"
+                            name="other"
+                            value="0"
+                            class="w-full p-3 pl-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span class="text-gray-500">$</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Travel -->
+                      <div class="spending-category">
+                        <div class="flex items-center gap-3 mb-3">
+                          <div
+                            class="w-10 h-10 rounded-full"
+                            style="
+                              background-color: var(--synchrony-light-gray);
+                            "
+                          >
+                            <svg
+                              class="w-6 h-6 m-2"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <label
+                              class="block font-medium"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Travel & Transportation
+                            </label>
+                            <p
+                              class="text-sm"
+                              style="color: var(--synchrony-charcoal)"
+                            >
+                              Flights, hotels, car rentals
+                            </p>
+                          </div>
+                        </div>
+                        <div class="relative">
+                          <input
+                            type="number"
+                            name="travel"
+                            value="0"
+                            class="w-full p-3 pl-8"
+                            placeholder="0"
+                          />
+                          <div
+                            class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+                          >
+                            <span style="color: var(--synchrony-charcoal)"
+                              >$</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+
+                    <!-- Calculate button with loading state -->
+                    <div class="mt-8 flex justify-end">
+                      <button
+                        type="button"
+                        id="calculate-button"
+                        onclick="calculateRewards()"
+                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+                      >
+                        <svg
+                          class="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Find My Best Cards
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section id="how-it-works" class="mb-16 scroll-mt-20">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="text-3xl font-bold text-center mb-12">
+            How Our Card Optimizer Works
+          </h2>
+
+          <!-- Process Steps -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <!-- Step 1 -->
+            <div
+              class="bg-white rounded-xl shadow-lg p-6 transform hover:-translate-y-1 transition-transform duration-300"
+            >
+              <div
+                class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+              >
+                <span class="text-blue-600 font-bold text-xl">1</span>
+              </div>
+              <h3 class="text-xl font-bold mb-3">Enter Your Spending</h3>
+              <p class="text-gray-600">
+                Input your monthly spending across different categories or use
+                our preset profiles to get started quickly.
+              </p>
+            </div>
+
+            <!-- Step 2 -->
+            <div
+              class="bg-white rounded-xl shadow-lg p-6 transform hover:-translate-y-1 transition-transform duration-300"
+            >
+              <div
+                class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+              >
+                <span class="text-blue-600 font-bold text-xl">2</span>
+              </div>
+              <h3 class="text-xl font-bold mb-3">Smart Analysis</h3>
+              <p class="text-gray-600">
+                Our algorithm analyzes your spending patterns and compares them
+                against our database of Synchrony cards.
+              </p>
+            </div>
+
+            <!-- Step 3 -->
+            <div
+              class="bg-white rounded-xl shadow-lg p-6 transform hover:-translate-y-1 transition-transform duration-300"
+            >
+              <div
+                class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4"
+              >
+                <span class="text-blue-600 font-bold text-xl">3</span>
+              </div>
+              <h3 class="text-xl font-bold mb-3">Get Recommendations</h3>
+              <p class="text-gray-600">
+                Receive personalized card recommendations ranked by potential
+                rewards and benefits for your spending habits.
+              </p>
+            </div>
+          </div>
+
+          <!-- Detailed Explanation -->
+          <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Reward Calculation -->
+            <div class="p-8 border-b">
+              <h3 class="text-2xl font-bold mb-6">
+                How We Calculate Your Rewards
+              </h3>
+              <div class="space-y-6">
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                  >
+                    <svg
+                      class="w-4 h-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-semibold mb-2">
+                      Category Optimization
+                    </h4>
+                    <p class="text-gray-600 mb-3">
+                      We analyze your spending in each category and match it
+                      with the highest possible reward rate across all available
+                      cards:
+                    </p>
+                    <div
+                      class="grid grid-cols-2 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg"
+                    >
+                      <div class="text-sm">
+                        <span class="font-medium">General Purchases:</span>
+                        <span class="text-blue-600">Up to 2%</span>
+                      </div>
+                      <div class="text-sm">
+                        <span class="font-medium">Home Improvement:</span>
+                        <span class="text-blue-600">Up to 5%</span>
+                      </div>
+                      <div class="text-sm">
+                        <span class="font-medium">Gas & Auto:</span>
+                        <span class="text-blue-600">Up to 3%</span>
+                      </div>
+                      <div class="text-sm">
+                        <span class="font-medium">Retail:</span>
+                        <span class="text-blue-600">Up to 3%</span>
+                      </div>
+                      <div class="text-sm">
+                        <span class="font-medium">Other:</span>
+                        <span class="text-blue-600">Up to 1.5%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                  >
+                    <svg
+                      class="w-4 h-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-semibold mb-2">
+                      Annual Value Calculation
+                    </h4>
+                    <p class="text-gray-600">
+                      We calculate your potential annual rewards by:
+                    </p>
+                    <ol class="list-decimal ml-4 mt-2 space-y-2 text-gray-600">
+                      <li>Converting monthly spending to annual amounts</li>
+                      <li>
+                        Applying the highest reward rate for each category
+                      </li>
+                      <li>Factoring in spending caps and bonus categories</li>
+                      <li>Subtracting any annual fees</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                  <div
+                    class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                  >
+                    <svg
+                      class="w-4 h-4 text-purple-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-semibold mb-2">
+                      Special Offers & Financing
+                    </h4>
+                    <p class="text-gray-600 mb-3">We also consider:</p>
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                      <div class="flex items-center gap-2">
+                        <svg
+                          class="w-5 h-5 text-green-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span class="text-gray-700"
+                          >Welcome bonuses and sign-up offers</span
+                        >
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <svg
+                          class="w-5 h-5 text-green-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span class="text-gray-700"
+                          >Store-specific benefits and perks</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Spending Profiles -->
+            <div class="p-8 bg-gray-50">
+              <h3 class="text-2xl font-bold mb-6">Preset Spending Profiles</h3>
+              <div
+                class="grid grid-cols-1 md:grid-cols-3 gap-6"
+                id="profile-examples"
+              >
+                <!-- Profile examples will be dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ Section -->
+          <div class="mt-12">
+            <h3 class="text-2xl font-bold mb-6">Frequently Asked Questions</h3>
+            <div class="space-y-4" id="faq-section">
+              <!-- FAQs will be dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card Categories Section -->
+      <section id="cards" class="mb-16 scroll-mt-20">
+        <h2 class="text-2xl font-bold mb-6 text-center">
+          Explore Cards by Category
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- General Purpose Cards -->
+          <a
+            href="#calculator"
+            onclick="filterCategory('general')"
+            class="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center mb-3">
+              <span class="text-blue-600 mr-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold">General Purpose Cards</h3>
+            </div>
+            <p class="text-gray-600">Up to 2% cash back on all purchases</p>
+            <p class="text-sm text-blue-600 mt-2">3 cards available</p>
+          </a>
+
+          <!-- Home & Furnishing -->
+          <a
+            href="#calculator"
+            onclick="filterCategory('home')"
+            class="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center mb-3">
+              <span class="text-green-600 mr-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+                  />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold">Home & Furnishing</h3>
+            </div>
+            <p class="text-gray-600">
+              Up to 5% back at Lowe's and special financing
+            </p>
+            <p class="text-sm text-blue-600 mt-2">3 cards available</p>
+          </a>
+
+          <!-- Automotive -->
+          <a
+            href="#calculator"
+            onclick="filterCategory('auto')"
+            class="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center mb-3">
+              <span class="text-red-600 mr-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
+                  />
+                  <path
+                    d="M3 4h3.879a3 3 0 012.12.879L13.12 9H17a2 2 0 012 2v4a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2z"
+                  />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold">Automotive</h3>
+            </div>
+            <p class="text-gray-600">Up to 5% back on gas & auto services</p>
+            <p class="text-sm text-blue-600 mt-2">2 cards available</p>
+          </a>
+
+          <!-- Retail Shopping -->
+          <a
+            href="#calculator"
+            onclick="filterCategory('retail')"
+            class="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center mb-3">
+              <span class="text-yellow-600 mr-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z"
+                  />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold">Retail Shopping</h3>
+            </div>
+            <p class="text-gray-600">Store-specific rewards and financing</p>
+            <p class="text-sm text-blue-600 mt-2">4 cards available</p>
+          </a>
+
+          <!-- Outdoor & Sports -->
+          <a
+            href="#calculator"
+            onclick="filterCategory('outdoors')"
+            class="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center mb-3">
+              <span class="text-green-700 mr-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold">Outdoor & Sports</h3>
+            </div>
+            <p class="text-gray-600">Special financing on outdoor gear</p>
+            <p class="text-sm text-blue-600 mt-2">1 card available</p>
+          </a>
+
+          <!-- Music & Entertainment -->
+          <a
+            href="#calculator"
+            onclick="filterCategory('music')"
+            class="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div class="flex items-center mb-3">
+              <span class="text-indigo-600 mr-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"
+                  />
+                </svg>
+              </span>
+              <h3 class="text-lg font-semibold">Music & Entertainment</h3>
+            </div>
+            <p class="text-gray-600">Extended financing on instruments</p>
+            <p class="text-sm text-blue-600 mt-2">1 card available</p>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+        <p>
+          © 2024 Credit Card Reward Optimizer. Not affiliated with Synchrony
+          Bank.
+        </p>
+        <p class="mt-2">
+          This tool is for informational purposes only. Actual card rewards and
+          terms may vary.
+        </p>
+      </div>
+    </footer>
+
+    <!-- Add html2pdf library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+      // Update the cardsData array with correct image URLs
+      const cardsData = [
+        // General Purpose Credit Cards
+        {
+          id: "premier",
+          name: "Synchrony Premier World Mastercard",
+          card_type: "Cash Back",
+          annual_fee: 0,
+          regular_apr_min: 19.99,
+          regular_apr_max: 29.99,
+          image_url: "https://www.synchrony.com/syc/img/card_premier.png",
+          application_url: "https://www.synchrony.com/financing/credit-cards",
+          card_rewards: [
+            {
+              id: "r1",
+              category: "all",
+              reward_rate: 2.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [
+            {
+              id: "o1",
+              offer_title: "Welcome Bonus",
+              offer_description:
+                "Get a $200 statement credit after spending $2,000 or more in qualifying purchases within the first 90 days",
+              is_active: true,
+            },
+            {
+              id: "o2",
+              offer_title: "Intro APR",
+              offer_description: "0% intro APR for 12 months on purchases",
+              is_active: true,
+            },
+          ],
+        },
+        {
+          id: "plus",
+          name: "Synchrony Plus World Mastercard",
+          card_type: "Cash Back",
+          annual_fee: 0,
+          regular_apr_min: 19.99,
+          regular_apr_max: 29.99,
+          image_url: "https://www.synchrony.com/syc/img/card_plus.png",
+          application_url: "https://www.synchrony.com/financing/credit-cards",
+          card_rewards: [
+            {
+              id: "r2",
+              category: "all",
+              reward_rate: 1.5,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [
+            {
+              id: "o3",
+              offer_title: "Welcome Bonus",
+              offer_description:
+                "Get a $150 statement credit after spending $1,500 or more in qualifying purchases within the first 90 days",
+              is_active: true,
+            },
+          ],
+        },
+        {
+          id: "preferred",
+          name: "Synchrony Preferred Mastercard",
+          card_type: "Cash Back",
+          annual_fee: 0,
+          regular_apr_min: 19.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/preferred_mastercard_cardart.png",
+          application_url: "https://www.synchrony.com/financing/credit-cards",
+          card_rewards: [
+            {
+              id: "r3",
+              category: "all",
+              reward_rate: 1.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [
+            {
+              id: "o4",
+              offer_title: "Welcome Bonus",
+              offer_description:
+                "Get a $100 statement credit after spending $1,000 or more in qualifying purchases within the first 90 days",
+              is_active: true,
+            },
+          ],
+        },
+        // Home & Furnishing Cards
+        {
+          id: "home",
+          name: "Synchrony HOME™ Credit Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url: "https://www.synchrony.com/sites/syc/img/home_cardart.png",
+          application_url:
+            "https://www.synchrony.com/financing/home/credit-card",
+          card_rewards: [
+            {
+              id: "r4",
+              category: "home_improvement",
+              reward_rate: 2.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [],
+        },
+        {
+          id: "ashley",
+          name: "Ashley Advantage™ Credit Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/ashley_advantage_cardart.png",
+          application_url:
+            "https://www.synchrony.com/financing/home/ashley-furniture",
+          card_rewards: [],
+          card_offers: [],
+        },
+        // Automotive Cards
+        {
+          id: "carcare",
+          name: "Synchrony Car Care™ Credit Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/car_care_cardart.png",
+          application_url:
+            "https://www.synchrony.com/financing/auto/credit-card",
+          card_rewards: [
+            {
+              id: "r5",
+              category: "gas",
+              reward_rate: 3.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+            {
+              id: "r6",
+              category: "auto",
+              reward_rate: 2.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [],
+        },
+        // Retail Store Cards
+        {
+          id: "sams_club",
+          name: "Sam's Club® Credit Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/sams_club_cardart.png",
+          application_url:
+            "https://www.synchrony.com/financing/retail/sams-club-credit",
+          card_rewards: [
+            {
+              id: "r8",
+              category: "gas",
+              reward_rate: 5.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+            {
+              id: "r9",
+              category: "sams_club",
+              reward_rate: 3.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [],
+        },
+        {
+          id: "lowes",
+          name: "Lowe's Advantage Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/lowes_advantage_cardart.png",
+          application_url: "https://www.synchrony.com/financing/home/lowes",
+          card_rewards: [
+            {
+              id: "r10",
+              category: "lowes",
+              reward_rate: 5.0,
+              max_spend: null,
+              is_rotating: false,
+            },
+          ],
+          card_offers: [],
+        },
+        // Outdoor & Sports Cards
+        {
+          id: "outdoors",
+          name: "Synchrony Outdoors™ Credit Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/outdoors_cardart.png",
+          application_url:
+            "https://www.synchrony.com/financing/sports/outdoors",
+          card_rewards: [],
+          card_offers: [],
+        },
+        // Music & Entertainment Cards
+        {
+          id: "guitar_center",
+          name: "Guitar Center Credit Card",
+          card_type: "Store Card",
+          annual_fee: 0,
+          regular_apr_min: 29.99,
+          regular_apr_max: 29.99,
+          image_url:
+            "https://www.synchrony.com/sites/syc/img/guitar_center_cardart.png",
+          application_url:
+            "https://www.synchrony.com/financing/music/guitar-center",
+          card_rewards: [],
+          card_offers: [],
+        },
+        // Additional store cards can be added here...
+      ];
+
+      // Update spending profile presets to match new categories
+      const PRESET_PROFILES = {
+        average: {
+          general: 1000,
+          home: 200,
+          auto: 200,
+          retail: 300,
+          travel: 200,
+          other: 300,
+        },
+        homeowner: {
+          general: 800,
+          home: 1000,
+          auto: 150,
+          retail: 200,
+          travel: 100,
+          other: 200,
+        },
+        traveler: {
+          general: 800,
+          home: 200,
+          auto: 150,
+          retail: 300,
+          travel: 1000,
+          other: 200,
+        },
+      };
+
+      // Apply spending profile preset
+      function applyPreset(type) {
+        // Remove active class from all buttons
+        document.querySelectorAll(".profile-button").forEach((button) => {
+          button.classList.remove("active");
+        });
+
+        // Add active class to clicked button
+        const clickedButton = document.querySelector(
+          `[onclick="applyPreset('${type}')"]`
+        );
+        if (clickedButton) {
+          clickedButton.classList.add("active");
+        }
+
+        // Apply the preset values to the form
+        const profile = PRESET_PROFILES[type];
+        const form = document.getElementById("spending-form");
+
+        if (profile) {
+          for (const [category, amount] of Object.entries(profile)) {
+            const input = form.elements[category];
+            if (input) {
+              input.value = amount;
+            }
+          }
+        }
+
+        // Update the total spending display
+        updateTotal();
+      }
+
+      // Get spending profile from form
+      function getSpendingProfile() {
+        const form = document.getElementById("spending-form");
+        const categories = [
+          "general",
+          "home",
+          "auto",
+          "retail",
+          "travel",
+          "other",
+        ];
+
+        const profile = {};
+        categories.forEach((category) => {
+          const input = form.elements[category];
+          if (input) {
+            profile[category] = parseFloat(input.value) || 0;
+          }
+        });
+
+        return profile;
+      }
+
+      // Update total spending calculation
+      function updateTotal() {
+        const form = document.getElementById("spending-form");
+        const categories = [
+          "general",
+          "home",
+          "auto",
+          "retail",
+          "travel",
+          "other",
+        ];
+
+        let total = 0;
+        categories.forEach((category) => {
+          const input = form.elements[category];
+          if (input) {
+            total += parseFloat(input.value) || 0;
+          }
+        });
+
+        // Update total display
+        const totalElement = document.getElementById("total-spend");
+        if (totalElement) {
+          totalElement.textContent = "$" + total.toLocaleString();
+        }
+
+        // Update estimated rewards
+        updateEstimatedRewards();
+
+        // Enable/disable calculate button
+        const calculateButton = document.getElementById("calculate-button");
+        if (calculateButton) {
+          calculateButton.disabled = total === 0;
+        }
+      }
+
+      // Add input validation and formatting
+      function setupInputValidation() {
+        const form = document.getElementById("spending-form");
+        const inputs = form.querySelectorAll('input[type="number"]');
+
+        inputs.forEach((input) => {
+          // Prevent negative numbers
+          input.addEventListener("input", function () {
+            if (this.value < 0) this.value = 0;
+          });
+
+          // Format on blur
+          input.addEventListener("blur", function () {
+            if (this.value) {
+              this.value = Math.round(parseFloat(this.value));
+            }
+          });
+
+          // Add visual feedback on focus
+          input.addEventListener("focus", function () {
+            this.parentElement.classList.add("ring-2", "ring-blue-100");
+          });
+
+          input.addEventListener("blur", function () {
+            this.parentElement.classList.remove("ring-2", "ring-blue-100");
+          });
+        });
+      }
+
+      // Setup smooth scrolling
+      function setupSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+          anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute("href"));
+            if (target) {
+              target.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }
+          });
+        });
+      }
+
+      // Add scroll spy for navigation
+      function setupScrollSpy() {
+        const sections = document.querySelectorAll("section[id]");
+        const navLinks = document.querySelectorAll("nav a");
+
+        window.addEventListener("scroll", () => {
+          let current = "";
+          sections.forEach((section) => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (scrollY >= sectionTop - 100) {
+              current = section.getAttribute("id");
+            }
+          });
+
+          navLinks.forEach((link) => {
+            link.classList.remove("text-blue-600", "font-medium");
+            if (link.getAttribute("href").slice(1) === current) {
+              link.classList.add("text-blue-600", "font-medium");
+            }
+          });
+        });
+      }
+
+      // Scroll to calculator section
+      function scrollToCalculator() {
+        const calculator = document.getElementById("calculator");
+        if (calculator) {
+          calculator.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      // Initialize the app
+      function init() {
+        // Add event listeners to all spending inputs
+        const form = document.getElementById("spending-form");
+        if (form) {
+          const inputs = form.querySelectorAll('input[type="number"]');
+          inputs.forEach((input) => {
+            input.addEventListener("change", updateTotal);
+            input.addEventListener("keyup", updateTotal);
+          });
+        }
+
+        // Setup input validation
+        setupInputValidation();
+
+        // Initialize total
+        updateTotal();
+
+        // Populate How It Works section
+        populateProfileExamples();
+        populateFAQs();
+        setupSmoothScroll();
+        setupScrollSpy();
+      }
+
+      // Run initialization when the page loads
+      window.onload = init;
+
+      // Add this function after the calculateRewards function
+      function displayResults(results, spendingProfile, totalMonthlySpend) {
+        const resultsSection = document.getElementById("results");
+        resultsSection.innerHTML = `
+            <div class="max-w-4xl mx-auto animate-fade-in">
+                <!-- Spending Summary -->
+                <div class="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg overflow-hidden mb-12">
+                    <div class="p-8 border-b border-blue-100">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">Your Spending Profile</h2>
+                            <button
+                                onclick="showCalculator()"
+                                class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Adjust Spending
+                            </button>
+                        </div>
+
+                        <!-- Monthly Summary -->
+                        <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 mb-1">Monthly Spending</p>
+                                    <p class="text-3xl font-bold text-blue-600">$${totalMonthlySpend.toLocaleString()}</p>
+                                    <p class="text-sm text-gray-500 mt-1">Across all categories</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 mb-1">Annual Projection</p>
+                                    <p class="text-3xl font-bold text-blue-800">$${(
+                                      totalMonthlySpend * 12
+                                    ).toLocaleString()}</p>
+                                    <p class="text-sm text-gray-500 mt-1">Total yearly spend</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Spending Breakdown -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            ${Object.entries(spendingProfile)
+                              .filter(([_, amount]) => amount > 0)
+                              .map(([category, amount]) => {
+                                const icons = {
+                                  general:
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />',
+                                  home: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />',
+                                  auto: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />',
+                                  healthcare:
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />',
+                                  retail:
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />',
+                                  other:
+                                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />',
+                                };
+
+                                const colors = {
+                                  general: "blue",
+                                  home: "green",
+                                  auto: "red",
+                                  healthcare: "purple",
+                                  retail: "yellow",
+                                  other: "gray",
+                                };
+
+                                const color = colors[category] || "gray";
+
+                                return `
+                                    <div class="bg-white p-4 rounded-xl shadow-sm border border-${color}-100 hover:border-${color}-200 transition-colors">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-${color}-100 flex items-center justify-center flex-shrink-0">
+                                                <svg class="w-4 h-4 text-${color}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    ${icons[category]}
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-900 capitalize">${category.replace(
+                                                  "_",
+                                                  " "
+                                                )}</p>
+                                                <p class="text-lg font-bold text-${color}-600">$${amount.toLocaleString()}</p>
+                                                <p class="text-xs text-gray-500">Monthly spend</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                              })
+                              .join("")}
+                        </div>
+                    </div>
+
+                    <!-- Estimated Rewards Summary -->
+                    <div class="bg-blue-600 text-white p-8">
+                        <h3 class="text-lg font-medium mb-4">Potential Annual Rewards</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white/10 rounded-lg p-4">
+                                <p class="text-sm font-medium text-white/80">Best Case Scenario</p>
+                                <p class="text-2xl font-bold">$${Math.round(
+                                  results[0].netRewards
+                                ).toLocaleString()}</p>
+                                <p class="text-sm text-white/70">With optimal card combination</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-4">
+                                <p class="text-sm font-medium text-white/80">Average Case</p>
+                                <p class="text-2xl font-bold">$${Math.round(
+                                  results[Math.floor(results.length / 2)]
+                                    .netRewards
+                                ).toLocaleString()}</p>
+                                <p class="text-sm text-white/70">With typical rewards cards</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-4">
+                                <p class="text-sm font-medium text-white/80">Monthly Average</p>
+                                <p class="text-2xl font-bold">$${Math.round(
+                                  results[0].netRewards / 12
+                                ).toLocaleString()}</p>
+                                <p class="text-sm text-white/70">Best case per month</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Recommendations -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold mb-6">Recommended Cards for Your Profile</h2>
+                    <div class="space-y-6">
+                        ${results
+                          .map(
+                            (result, index) => `
+                            <div class="card-item bg-white rounded-xl shadow-lg overflow-hidden ${
+                              index === 0
+                                ? "best-card ring-2 ring-blue-500"
+                                : ""
+                            }">
+                                <div class="p-6 md:p-8">
+                                    <div class="flex flex-col md:flex-row gap-8">
+                                        <!-- Card Image Column -->
+                                        <div class="w-full md:w-1/3">
+                                            <div class="bg-gray-50 rounded-xl p-6 flex items-center justify-center">
+                                                <img
+                                                    src="${
+                                                      result.card.image_url
+                                                    }"
+                                                    alt="${result.cardName}"
+                                                    class="w-full max-w-[240px] h-auto object-contain transform transition-transform hover:scale-105"
+                                                    onerror="this.onerror=null; this.src='https://www.synchrony.com/sites/syc/img/card_placeholder_cardart.png';"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <!-- Card Details Column -->
+                                        <div class="w-full md:w-2/3">
+                                            <div class="flex flex-col md:flex-row justify-between items-start mb-4">
+                                                <div class="mb-4 md:mb-0">
+                                                    <h3 class="text-lg font-bold mb-2">${
+                                                      result.cardName
+                                                    }</h3>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-sm">${
+                                                          result.cardType
+                                                        }</span>
+                                                        ${
+                                                          result.annualFee > 0
+                                                            ? `<span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-sm">Annual Fee: $${result.annualFee}</span>`
+                                                            : `<span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-sm">No Annual Fee</span>`
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <p class="text-xs text-gray-600 mb-1">Annual Rewards Value</p>
+                                                    <p class="text-xl font-bold text-green-600">$${Math.round(
+                                                      result.netRewards
+                                                    ).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Reward Breakdown -->
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                                ${Object.entries(
+                                                  result.rewardBreakdown
+                                                )
+                                                  .filter(
+                                                    ([_, data]) =>
+                                                      data.earned > 0
+                                                  )
+                                                  .map(
+                                                    ([category, data]) => `
+                                                    <div class="bg-gray-50 rounded-lg p-3">
+                                                        <div class="flex justify-between items-center mb-1">
+                                                            <span class="text-sm font-medium capitalize">${category.replace(
+                                                              "_",
+                                                              " "
+                                                            )}</span>
+                                                            <span class="text-sm text-blue-600">${
+                                                              data.rate
+                                                            }%</span>
+                                                        </div>
+                                                        <div class="reward-bar rounded-full bg-gray-200 h-1.5">
+                                                            <div class="reward-bar-fill rounded-full bg-blue-600 transition-all duration-1000" 
+                                                                 style="width: ${
+                                                                   (data.earned /
+                                                                     result.totalRewards) *
+                                                                   100
+                                                                 }%">
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex justify-between items-center mt-1 text-xs text-gray-600">
+                                                            <span>$${Math.round(
+                                                              data.earned
+                                                            ).toLocaleString()}/yr</span>
+                                                            <span>$${Math.round(
+                                                              data.spent
+                                                            ).toLocaleString()}/yr</span>
+                                                        </div>
+                                                    </div>
+                                                `
+                                                  )
+                                                  .join("")}
+                                            </div>
+
+                                            <!-- Card Offers -->
+                                            ${
+                                              result.card.card_offers.length > 0
+                                                ? `
+                                                <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                                                    <h4 class="text-sm font-medium mb-2">Special Offers</h4>
+                                                    <ul class="space-y-1.5">
+                                                        ${result.card.card_offers
+                                                          .filter(
+                                                            (offer) =>
+                                                              offer.is_active
+                                                          )
+                                                          .map(
+                                                            (offer) => `
+                                                            <li class="flex items-start gap-2">
+                                                                <svg class="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                <span class="text-xs text-gray-700">${offer.offer_description}</span>
+                                                            </li>
+                                                        `
+                                                          )
+                                                          .join("")}
+                                                    </ul>
+                                                </div>
+                                                `
+                                                : ""
+                                            }
+
+                                            <!-- Apply Button -->
+                                            <div class="flex items-center gap-3">
+                                                <a href="${
+                                                  result.card.application_url
+                                                }"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer"
+                                                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:-translate-y-0.5">
+                                                    Apply Now
+                                                    <svg class="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                    </svg>
+                                                </a>
+                                                <button class="text-blue-600 hover:text-blue-700 text-sm"
+                                                        onclick="showCardDetails('${
+                                                          result.cardId
+                                                        }')">
+                                                    View Details
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Animate the reward bars after render
+        setTimeout(() => {
+          document.querySelectorAll(".reward-bar-fill").forEach((bar) => {
+            bar.style.width = bar.getAttribute("style").split(":")[1];
+          });
+        }, 100);
+      }
+
+      // Add this function before the init() function
+      function filterCategory(category) {
+        // Scroll to calculator
+        document
+          .getElementById("calculator")
+          .scrollIntoView({ behavior: "smooth" });
+
+        // Clear existing values
+        const form = document.getElementById("spending-form");
+        const inputs = form.querySelectorAll('input[type="number"]');
+        inputs.forEach((input) => {
+          input.value = 0;
+        });
+
+        // Set a default amount for the selected category
+        const categoryDefaults = {
+          general: { general: 1000 },
+          home: { home: 1000 },
+          auto: { auto: 500 },
+          healthcare: { healthcare: 1000 },
+          retail: { retail: 500 },
+          outdoors: { retail: 500 },
+          music: { retail: 500 },
+        };
+
+        const defaults = categoryDefaults[category] || {};
+        for (const [key, value] of Object.entries(defaults)) {
+          const input = form.elements[key];
+          if (input) {
+            input.value = value;
+          }
+        }
+
+        // Update total
+        updateTotal();
+      }
+
+      // Populate profile examples in How It Works section
+      function populateProfileExamples() {
+        const profileExamples = document.getElementById("profile-examples");
+        if (!profileExamples) return;
+
+        const profiles = [
+          {
+            name: "Average Spender",
+            description: "Balanced spending across categories",
+            icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />',
+            color: "blue",
+            spending: PRESET_PROFILES.average,
+          },
+          {
+            name: "Home Improver",
+            description: "Focus on home renovation and repairs",
+            icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />',
+            color: "green",
+            spending: PRESET_PROFILES.homeowner,
+          },
+          {
+            name: "Healthcare Focus",
+            description: "Higher medical and healthcare expenses",
+            icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />',
+            color: "purple",
+            spending: PRESET_PROFILES.healthcare,
+          },
+        ];
+
+        profileExamples.innerHTML = profiles
+          .map(
+            (profile) => `
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-4 bg-${profile.color}-50 border-b border-${
+              profile.color
+            }-100">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-full bg-${
+                  profile.color
+                }-100 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-${
+                    profile.color
+                  }-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${profile.icon}
+                  </svg>
+                </div>
+                <h4 class="font-semibold">${profile.name}</h4>
+              </div>
+              <p class="text-sm text-gray-600">${profile.description}</p>
+            </div>
+            <div class="p-4">
+              <div class="space-y-2">
+                ${Object.entries(profile.spending)
+                  .map(
+                    ([category, amount]) => `
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600 capitalize">${category.replace(
+                        "_",
+                        " "
+                      )}</span>
+                      <span class="font-medium">$${amount.toLocaleString()}</span>
+                    </div>
+                  `
+                  )
+                  .join("")}
+              </div>
+              <button
+                onclick="applyPreset('${profile.name
+                  .toLowerCase()
+                  .replace(" ", "_")}')"
+                class="w-full mt-4 px-4 py-2 bg-${profile.color}-100 text-${
+              profile.color
+            }-700 rounded-lg hover:bg-${
+              profile.color
+            }-200 transition-colors text-sm font-medium"
+              >
+                Try This Profile
+              </button>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Populate FAQ section
+      function populateFAQs() {
+        const faqSection = document.getElementById("faq-section");
+        if (!faqSection) return;
+
+        const faqs = [
+          {
+            question: "How accurate are the reward calculations?",
+            answer:
+              "Our calculations are based on current card reward rates and terms. We factor in category-specific rewards, spending caps, and annual fees to provide the most accurate estimates possible. However, actual rewards may vary based on specific card terms and conditions.",
+          },
+          {
+            question: "Can I have multiple Synchrony cards?",
+            answer:
+              "Yes, you can have multiple Synchrony cards. In fact, having a mix of cards can help maximize your rewards across different spending categories. Each card application is evaluated independently based on your creditworthiness.",
+          },
+          {
+            question: "How often should I update my spending profile?",
+            answer:
+              "We recommend updating your spending profile whenever your spending habits significantly change, or at least every 6 months. This helps ensure your card recommendations remain optimized for your current lifestyle.",
+          },
+          {
+            question: "What credit score do I need?",
+            answer:
+              "Credit score requirements vary by card. Generally, store cards may be easier to qualify for, while cards like the Premier World Mastercard typically require good to excellent credit (670+ FICO score).",
+          },
+          {
+            question: "Are the special financing offers worth it?",
+            answer:
+              "Special financing offers can be valuable if you need to make a large purchase and can pay it off within the promotional period. However, be sure to understand the terms, as interest may be charged from the purchase date if not paid in full by the end of the promotional period.",
+          },
+        ];
+
+        faqSection.innerHTML = faqs
+          .map(
+            (faq, index) => `
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <button
+              class="w-full px-6 py-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-50"
+              onclick="toggleFAQ(${index})"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-medium">${faq.question}</span>
+                <svg class="w-5 h-5 text-gray-500 transform transition-transform faq-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+            <div class="faq-answer px-6 py-4 border-t hidden">
+              <p class="text-gray-600">${faq.answer}</p>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Toggle FAQ answers
+      function toggleFAQ(index) {
+        const faqItems = document.querySelectorAll(".faq-answer");
+        const faqIcons = document.querySelectorAll(".faq-icon");
+
+        faqItems[index].classList.toggle("hidden");
+        faqIcons[index].classList.toggle("rotate-180");
+      }
+
+      // Calculate rewards and find best cards
+      function calculateRewards() {
+        // Get spending profile from form
+        const spendingForm = document.querySelector("#spending-form");
+        const formData = new FormData(spendingForm);
+        const spendingProfile = {};
+        let totalMonthlySpend = 0;
+
+        // Convert form data to spending profile
+        for (const [category, amount] of formData.entries()) {
+          const value = parseFloat(amount) || 0;
+          spendingProfile[category] = value;
+          totalMonthlySpend += value;
+        }
+
+        // Calculate rewards for each card
+        const cardResults = cardsData.map((card) => {
+          let totalRewards = 0;
+          const rewardBreakdown = {};
+
+          // Initialize reward breakdown for all categories
+          for (const category in spendingProfile) {
+            rewardBreakdown[category] = {
+              spent: spendingProfile[category] * 12,
+              earned: 0,
+              rate: 0,
+            };
+          }
+
+          // Calculate rewards for each reward tier
+          card.card_rewards.forEach((reward) => {
+            if (reward.category === "all") {
+              // Apply flat rate to all spending
+              for (const category in spendingProfile) {
+                const annualCategorySpend = spendingProfile[category] * 12;
+                const categoryRewards =
+                  (annualCategorySpend * reward.reward_rate) / 100;
+                rewardBreakdown[category].earned = categoryRewards;
+                rewardBreakdown[category].rate = reward.reward_rate;
+                totalRewards += categoryRewards;
+              }
+            } else {
+              // Apply category-specific rewards
+              const matchingCategories = [reward.category];
+              matchingCategories.forEach((category) => {
+                if (spendingProfile[category]) {
+                  const annualCategorySpend = spendingProfile[category] * 12;
+                  const categoryRewards =
+                    (annualCategorySpend * reward.reward_rate) / 100;
+
+                  // Only update if this reward rate is better than existing
+                  if (reward.reward_rate > rewardBreakdown[category].rate) {
+                    rewardBreakdown[category].earned = categoryRewards;
+                    rewardBreakdown[category].rate = reward.reward_rate;
+                    totalRewards += categoryRewards;
+                  }
+                }
+              });
+            }
+          });
+
+          // Calculate net rewards after annual fee
+          const netRewards = totalRewards - card.annual_fee;
+
+          return {
+            cardId: card.id,
+            cardName: card.name,
+            cardType: card.card_type,
+            annualFee: card.annual_fee,
+            totalRewards,
+            netRewards,
+            rewardBreakdown,
+            card: card,
+          };
+        });
+
+        // Sort cards by net rewards
+        const sortedResults = cardResults.sort(
+          (a, b) => b.netRewards - a.netRewards
+        );
+
+        // Show results section and hide calculator
+        document.getElementById("calculator").classList.add("hidden");
+        const resultsSection = document.getElementById("results");
+        resultsSection.classList.remove("hidden");
+
+        // Display results
+        displayResults(sortedResults, spendingProfile, totalMonthlySpend);
+
+        // Scroll to results section
+        resultsSection.scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Show calculator and hide results
+      function showCalculator() {
+        document.getElementById("calculator").classList.remove("hidden");
+        document.getElementById("results").classList.add("hidden");
+        document
+          .getElementById("calculator")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Update estimated rewards in real-time
+      function updateEstimatedRewards() {
+        const spendingProfile = getSpendingProfile();
+        const totalMonthlySpend = Object.values(spendingProfile).reduce(
+          (a, b) => a + b,
+          0
+        );
+        const annualSpend = totalMonthlySpend * 12;
+
+        // Get the best possible reward rate (simplified calculation)
+        const bestRewardRate = 2.0; // Assume 2% is the best flat rate available
+        const estimatedAnnualRewards = (annualSpend * bestRewardRate) / 100;
+
+        // Update the display
+        const rewardsElement = document.getElementById("estimated-rewards");
+        if (rewardsElement) {
+          rewardsElement.textContent =
+            "$" + Math.round(estimatedAnnualRewards).toLocaleString();
+        }
+      }
+
+      // Add credit score impact calculation function
+      function updateDetailedCreditImpact() {
+        const currentScore =
+          parseInt(document.getElementById("current-score").value) || 0;
+        const recentApps =
+          parseInt(document.getElementById("recent-applications").value) || 0;
+        const utilization =
+          parseInt(document.getElementById("credit-utilization").value) || 0;
+        const accountAge =
+          parseInt(document.getElementById("account-age").value) || 0;
+
+        if (currentScore === 0) {
+          document.getElementById("credit-impact-result").innerHTML =
+            "Please enter your current credit score";
+          return;
+        }
+
+        // Credit Score Category Analysis
+        const scoreCategory = getScoreCategory(currentScore);
+        document.getElementById("score-category-section").innerHTML =
+          generateScoreCategoryHTML(scoreCategory);
+
+        // Calculate Impact
+        const impacts = calculateDetailedImpact(
+          currentScore,
+          recentApps,
+          utilization,
+          accountAge
+        );
+        document.getElementById("credit-impact-result").innerHTML =
+          generateImpactHTML(impacts);
+
+        // Update Charts
+        updateCreditScoreCharts(currentScore, impacts, scoreCategory);
+        updateFicoFactorsChart();
+        updateScoreDistributionChart(currentScore);
+        updateFactorsBreakdown(impacts);
+      }
+
+      function getScoreCategory(score) {
+        if (score >= 800)
+          return { category: "Exceptional", range: "800-850", color: "green" };
+        if (score >= 740)
+          return { category: "Very Good", range: "740-799", color: "blue" };
+        if (score >= 670)
+          return { category: "Good", range: "670-739", color: "teal" };
+        if (score >= 580)
+          return { category: "Fair", range: "580-669", color: "yellow" };
+        return { category: "Poor", range: "300-579", color: "red" };
+      }
+
+      function calculateDetailedImpact(
+        score,
+        recentApps,
+        utilization,
+        accountAge
+      ) {
+        console.log("Input values:", {
+          score,
+          recentApps,
+          utilization,
+          accountAge,
+        });
+
+        const impacts = {
+          newInquiry: 0,
+          utilizationImpact: 0,
+          accountAgeImpact: 0,
+          multipleInquiryPenalty: 0,
+          total: 0,
+          status: null,
+          message: null,
+        };
+
+        // Check for excellent profile first
+        if (
+          score >= 740 &&
+          utilization <= 10 &&
+          accountAge >= 7 &&
+          recentApps === 0
+        ) {
+          impacts.status = "Excellent Profile";
+          impacts.message =
+            "Your credit profile is already in excellent standing. Continue maintaining these positive credit habits.";
+          return impacts; // Return early with no negative impacts
+        }
+
+        // New Credit Inquiry Impact
+        if (recentApps > 0) {
+          // Single inquiry impact
+          impacts.newInquiry = -3;
+
+          // Multiple applications penalty (if more than 1)
+          if (recentApps > 1) {
+            // -5 points per additional application, max -20
+            impacts.multipleInquiryPenalty = Math.max(
+              -20,
+              (recentApps - 1) * -5
+            );
+          }
+        }
+
+        // Utilization Impact
+        if (utilization > 0) {
+          if (utilization <= 10) {
+            impacts.utilizationImpact = 0; // Optimal
+          } else if (utilization <= 30) {
+            impacts.utilizationImpact = -10; // Good
+          } else if (utilization <= 50) {
+            impacts.utilizationImpact = -25; // Fair
+          } else if (utilization <= 75) {
+            impacts.utilizationImpact = -35; // Poor
+          } else {
+            impacts.utilizationImpact = -45; // Very Poor
+          }
+        }
+
+        // Account Age Impact
+        if (accountAge < 1) {
+          impacts.accountAgeImpact = -20;
+        } else if (accountAge < 2) {
+          impacts.accountAgeImpact = -15;
+        } else if (accountAge < 5) {
+          impacts.accountAgeImpact = -5;
+        }
+        // No impact for accounts 5+ years old
+
+        // Calculate total impact
+        impacts.total =
+          impacts.newInquiry +
+          impacts.utilizationImpact +
+          impacts.accountAgeImpact +
+          impacts.multipleInquiryPenalty;
+
+        // Set recovery time based on most severe factor
+        impacts.recoveryMonths = calculateRecoveryTime(
+          recentApps,
+          utilization,
+          impacts.total
+        );
+
+        console.log("Calculated impacts:", impacts);
+        return impacts;
+      }
+
+      function calculateRecoveryTime(recentApps, utilization, totalImpact) {
+        let recoveryMonths = 0;
+
+        // Base recovery time based on total impact severity
+        if (totalImpact < -50) {
+          recoveryMonths = 24;
+        } else if (totalImpact < -35) {
+          recoveryMonths = 18;
+        } else if (totalImpact < -20) {
+          recoveryMonths = 12;
+        } else if (totalImpact < 0) {
+          recoveryMonths = 6;
+        }
+
+        // Adjust for specific factors
+        if (recentApps > 0) {
+          recoveryMonths = Math.max(recoveryMonths, recentApps * 6); // Each hard inquiry takes about 6 months to start recovery
+        }
+
+        if (utilization > 30) {
+          // Utilization can recover quickly if reduced
+          recoveryMonths = Math.min(recoveryMonths, 3);
+        }
+
+        return recoveryMonths;
+      }
+
+      function generateScoreCategoryHTML(category) {
+        const colors = {
+          green: "bg-green-100 text-green-800",
+          blue: "bg-blue-100 text-blue-800",
+          teal: "bg-teal-100 text-teal-800",
+          yellow: "bg-yellow-100 text-yellow-800",
+          red: "bg-red-100 text-red-800",
+        };
+
+        return `
+          <div class="${colors[category.color]} p-4 rounded-lg">
+            <h5 class="font-medium mb-2">Current Score Category</h5>
+            <p class="text-2xl font-bold mb-1">${category.category}</p>
+            <p class="text-sm">Score Range: ${category.range}</p>
+          </div>
+        `;
+      }
+
+      function generateImpactHTML(impacts) {
+        console.log("Generating HTML for impacts:", impacts);
+
+        const impactClass = impacts.status
+          ? "text-green-600"
+          : impacts.total === 0
+          ? "text-green-600"
+          : impacts.total > -25
+          ? "text-yellow-600"
+          : "text-red-600";
+
+        return `
+          <div class="space-y-4">
+            <div class="p-4 bg-gray-50 rounded-lg">
+              ${
+                impacts.status
+                  ? `
+                <p class="font-medium text-green-600 text-lg">
+                  ${impacts.status}
+                </p>
+                <p class="text-sm text-gray-600 mt-2">
+                  ${impacts.message}
+                </p>
+              `
+                  : `
+                <p class="font-medium ${impactClass} text-lg">
+                  Estimated Total Impact: ${impacts.total} points
+                </p>
+                <p class="text-sm text-gray-600 mt-2">
+                  ${
+                    impacts.total < 0
+                      ? `Estimated Recovery Time: ${impacts.recoveryMonths} months`
+                      : "No recovery time needed - maintain your good credit habits!"
+                  }
+                </p>
+              `
+              }
+            </div>
+            
+            <div class="space-y-2">
+              <h5 class="font-medium">Impact Breakdown:</h5>
+              <ul class="list-disc pl-5 space-y-1">
+                ${
+                  impacts.newInquiry !== 0
+                    ? `<li class="text-sm">New Credit Inquiry: ${impacts.newInquiry} points</li>`
+                    : ""
+                }
+                ${
+                  impacts.multipleInquiryPenalty !== 0
+                    ? `<li class="text-sm">Multiple Applications Impact: ${impacts.multipleInquiryPenalty} points</li>`
+                    : ""
+                }
+                ${
+                  impacts.utilizationImpact !== 0
+                    ? `<li class="text-sm">Credit Utilization Impact: ${impacts.utilizationImpact} points</li>`
+                    : ""
+                }
+                ${
+                  impacts.accountAgeImpact !== 0
+                    ? `<li class="text-sm">Account Age Impact: ${impacts.accountAgeImpact} points</li>`
+                    : ""
+                }
+                ${
+                  impacts.newInquiry === 0 &&
+                  impacts.utilizationImpact === 0 &&
+                  impacts.accountAgeImpact === 0 &&
+                  impacts.multipleInquiryPenalty === 0
+                    ? `<li class="text-sm text-gray-600">No negative impacts detected</li>`
+                    : `<li class="text-sm text-gray-600">Factors with 0 impact are not shown</li>`
+                }
+              </ul>
+            </div>
+          </div>
+        `;
+      }
+
+      function updateCreditScoreCharts(currentScore, impacts, category) {
+        const ctx = document
+          .getElementById("creditScoreChart")
+          .getContext("2d");
+        const months = impacts.recoveryMonths;
+
+        // Generate timeline data
+        const labels = [];
+        const scoreData = [];
+        const recoveryData = [];
+        const categoryRanges = [];
+
+        for (let i = 0; i <= months; i++) {
+          labels.push(`Month ${i}`);
+          if (i === 0) {
+            scoreData.push(currentScore);
+            recoveryData.push(currentScore);
+          } else if (i === 1) {
+            scoreData.push(currentScore + impacts.total);
+            recoveryData.push(currentScore + impacts.total);
+          } else {
+            const recovery = Math.min(
+              currentScore,
+              currentScore +
+                impacts.total +
+                (currentScore - (currentScore + impacts.total)) * (i / months)
+            );
+            scoreData.push(null);
+            recoveryData.push(recovery);
+          }
+          categoryRanges.push({
+            exceptional: 800,
+            veryGood: 740,
+            good: 670,
+            fair: 580,
+          });
+        }
+
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Your Score",
+                data: scoreData,
+                borderColor: "rgb(59, 130, 246)",
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                pointRadius: 6,
+                pointBackgroundColor: "rgb(59, 130, 246)",
+              },
+              {
+                label: "Estimated Recovery",
+                data: recoveryData,
+                borderColor: "rgb(16, 185, 129)",
+                borderDash: [5, 5],
+                pointRadius: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: "Credit Score Impact & Recovery Timeline",
+              },
+            },
+            scales: {
+              y: {
+                min: Math.min(currentScore + impacts.total - 30, 300),
+                max: Math.max(currentScore + 10, 850),
+                grid: {
+                  color: (context) => {
+                    if (context.tick.value === 800)
+                      return "rgba(34, 197, 94, 0.2)";
+                    if (context.tick.value === 740)
+                      return "rgba(59, 130, 246, 0.2)";
+                    if (context.tick.value === 670)
+                      return "rgba(45, 212, 191, 0.2)";
+                    if (context.tick.value === 580)
+                      return "rgba(234, 179, 8, 0.2)";
+                    return "rgba(0, 0, 0, 0.1)";
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateFicoFactorsChart() {
+        const ctx = document
+          .getElementById("ficoFactorsChart")
+          .getContext("2d");
+
+        new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: [
+              "Payment History",
+              "Credit Utilization",
+              "Length of Credit",
+              "Credit Mix",
+              "New Credit",
+            ],
+            datasets: [
+              {
+                data: [35, 30, 15, 10, 10],
+                backgroundColor: [
+                  "rgba(34, 197, 94, 0.6)",
+                  "rgba(59, 130, 246, 0.6)",
+                  "rgba(45, 212, 191, 0.6)",
+                  "rgba(234, 179, 8, 0.6)",
+                  "rgba(239, 68, 68, 0.6)",
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: "FICO Score Factors Weight",
+              },
+            },
+          },
+        });
+      }
+
+      function updateScoreDistributionChart(currentScore) {
+        const ctx = document
+          .getElementById("scoreDistributionChart")
+          .getContext("2d");
+
+        // National score distribution data (approximate)
+        const data = {
+          labels: ["300-579", "580-669", "670-739", "740-799", "800-850"],
+          datasets: [
+            {
+              label: "Population %",
+              data: [16, 17, 21, 25, 21],
+              backgroundColor: [
+                "rgba(239, 68, 68, 0.6)",
+                "rgba(234, 179, 8, 0.6)",
+                "rgba(45, 212, 191, 0.6)",
+                "rgba(59, 130, 246, 0.6)",
+                "rgba(34, 197, 94, 0.6)",
+              ],
+            },
+          ],
+        };
+
+        new Chart(ctx, {
+          type: "bar",
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: "National Credit Score Distribution",
+              },
+            },
+          },
+        });
+      }
+
+      function updateFactorsBreakdown(impacts) {
+        const factorsBreakdown = document.getElementById("factors-breakdown");
+
+        // Get user inputs
+        const currentScore =
+          parseInt(document.getElementById("current-score").value) || 0;
+        const utilization =
+          parseInt(document.getElementById("credit-utilization").value) || 0;
+        const accountAge =
+          parseInt(document.getElementById("account-age").value) || 0;
+        const recentApps =
+          parseInt(document.getElementById("recent-applications").value) || 0;
+
+        // Generate recommendations based on FICO factors
+        const recommendations = generateRecommendations(
+          currentScore,
+          utilization,
+          accountAge,
+          recentApps,
+          impacts
+        );
+
+        factorsBreakdown.innerHTML = `
+          <div class="col-span-full mb-4">
+            <h4 class="text-lg font-medium mb-2">Personalized Recommendations</h4>
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <div class="space-y-4">
+                ${recommendations
+                  .map(
+                    (rec) => `
+                  <div class="recommendation-item">
+                    <div class="flex items-start gap-3">
+                      <div class="flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full ${
+                          rec.priority === "High"
+                            ? "bg-red-100"
+                            : rec.priority === "Medium"
+                            ? "bg-yellow-100"
+                            : "bg-green-100"
+                        } 
+                             flex items-center justify-center">
+                          <span class="${
+                            rec.priority === "High"
+                              ? "text-red-600"
+                              : rec.priority === "Medium"
+                              ? "text-yellow-600"
+                              : "text-green-600"
+                          }">
+                            ${rec.priority[0]}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <h5 class="font-medium mb-1">${rec.title}</h5>
+                        <p class="text-sm text-gray-600">${rec.description}</p>
+                        ${
+                          rec.impact
+                            ? `<p class="text-sm font-medium mt-1 ${
+                                rec.impact > 0
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }">
+                          Potential Impact: ${rec.impact > 0 ? "+" : ""}${
+                                rec.impact
+                              } points
+                        </p>`
+                            : ""
+                        }
+                        <p class="text-sm text-gray-500 mt-1">Timeline: ${
+                          rec.timeline
+                        }</p>
+                      </div>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function generateRecommendations(
+        score,
+        utilization,
+        accountAge,
+        recentApps,
+        impacts
+      ) {
+        const recommendations = [];
+
+        // Utilization Recommendations (30% of FICO Score)
+        if (utilization > 30) {
+          recommendations.push({
+            title: "Reduce Credit Utilization",
+            description:
+              utilization > 75
+                ? "Your credit utilization is critically high. Aim to reduce it below 30% immediately for optimal impact. Consider requesting credit limit increases or making multiple payments per month."
+                : "Work on reducing your credit utilization below 30%. The ideal range is 1-10% for the best score impact.",
+            impact: -impacts.utilizationImpact, // Potential improvement
+            timeline: "1-3 months",
+            priority: utilization > 50 ? "High" : "Medium",
+          });
+        }
+
+        // Recent Applications Impact (10% of FICO Score)
+        if (recentApps > 2) {
+          recommendations.push({
+            title: "Limit New Credit Applications",
+            description:
+              "Multiple recent credit applications can significantly impact your score. Wait at least 6 months before applying for new credit.",
+            impact: -impacts.multipleInquiryPenalty,
+            timeline: "12-24 months for inquiries to drop off",
+            priority: "High",
+          });
+        }
+
+        // Account Age Recommendations (15% of FICO Score)
+        if (accountAge < 5) {
+          recommendations.push({
+            title: "Build Credit History",
+            description:
+              accountAge < 2
+                ? "Your credit history is very young. Keep existing accounts open and active to build a longer credit history."
+                : "Continue building your credit history. Avoid closing your oldest accounts.",
+            impact: 20,
+            timeline: "Ongoing (improves naturally with time)",
+            priority: accountAge < 2 ? "Medium" : "Low",
+          });
+        }
+
+        // Score-Based Recommendations
+        if (score < 670) {
+          recommendations.push({
+            title: "Focus on Payment History",
+            description:
+              "Payment history is the most important factor (35% of your score). Set up automatic payments to ensure all bills are paid on time.",
+            impact: 35,
+            timeline: "6-12 months of consistent payments",
+            priority: "High",
+          });
+        }
+
+        // Credit Mix Recommendations (10% of FICO Score)
+        if (score >= 670 && recommendations.length < 4) {
+          recommendations.push({
+            title: "Diversify Credit Mix",
+            description:
+              "Consider maintaining a healthy mix of credit types (credit cards, installment loans, etc.) to demonstrate credit management skills.",
+            impact: 10,
+            timeline: "6-12 months",
+            priority: "Low",
+          });
+        }
+
+        // Recovery Strategy
+        if (impacts.total < -20) {
+          recommendations.push({
+            title: "Score Recovery Strategy",
+            description: `Focus on the most impactful factors first. Your score should begin recovering in ${impacts.recoveryMonths} months with positive credit behavior.`,
+            timeline: `${impacts.recoveryMonths} months`,
+            priority: "Medium",
+          });
+        }
+
+        // Add general recommendation if score is good
+        if (score >= 740 && recommendations.length < 3) {
+          recommendations.push({
+            title: "Maintain Your Excellent Score",
+            description:
+              "Continue your positive credit habits. Consider requesting credit limit increases every 6-12 months to maintain low utilization.",
+            timeline: "Ongoing",
+            priority: "Low",
+          });
+        }
+
+        // After generating recommendations, calculate and display forecast
+        displayCreditScoreForecast(
+          score,
+          utilization,
+          accountAge,
+          recentApps,
+          impacts,
+          recommendations
+        );
+
+        return recommendations.sort((a, b) => {
+          const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+      }
+
+      function displayCreditScoreForecast(
+        score,
+        utilization,
+        accountAge,
+        recentApps,
+        impacts,
+        recommendations
+      ) {
+        try {
+          console.log("Initializing forecast with:", {
+            score,
+            utilization,
+            accountAge,
+            recentApps,
+          });
+
+          // Create forecast scenarios
+          const scenarios = calculateForecastScenarios(
+            score,
+            utilization,
+            accountAge,
+            recentApps,
+            impacts,
+            recommendations
+          );
+          console.log("Generated scenarios:", scenarios);
+
+          // Add forecast section to the page
+          const forecastHTML = `
+          <div class="col-span-full mt-6">
+            <h4 class="text-lg font-medium mb-4">Credit Score Forecast</h4>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+                <!-- Scenario Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  ${Object.entries(scenarios)
+                    .map(
+                      ([scenario, data]) => `
+                  <div class="p-4 ${
+                    scenario === "optimal"
+                      ? "bg-green-50 border-green-100"
+                      : scenario === "moderate"
+                      ? "bg-yellow-50 border-yellow-100"
+                      : "bg-red-50 border-red-100"
+                  } rounded-lg border">
+                      <h5 class="font-medium mb-2 ${
+                        scenario === "optimal"
+                          ? "text-green-700"
+                          : scenario === "moderate"
+                          ? "text-yellow-700"
+                          : "text-red-700"
+                      } capitalize">${scenario} Scenario</h5>
+                      <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                          <span class="text-sm text-gray-600">3 Months:</span>
+                          <span class="font-medium">${data.threeMonths}</span>
+                  </div>
+                        <div class="flex justify-between items-center">
+                          <span class="text-sm text-gray-600">6 Months:</span>
+                          <span class="font-medium">${data.sixMonths}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                          <span class="text-sm text-gray-600">12 Months:</span>
+                          <span class="font-medium">${data.twelveMonths}</span>
+                        </div>
+                      </div>
+                      <p class="text-sm text-gray-600 mt-3">${
+                        data.description
+                      }</p>
+                    </div>
+                  `
+                    )
+                    .join("")}
+              </div>
+
+                <!-- Charts Container -->
+                <div class="space-y-6">
+                <!-- Main Forecast Chart -->
+                  <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h5 class="font-medium mb-4">Score Projection Timeline</h5>
+                <div class="h-64">
+                  <canvas id="forecastChart"></canvas>
+                </div>
+                </div>
+
+                  <!-- Factor Weights Chart -->
+                  <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h5 class="font-medium mb-4">FICO Score Factors</h5>
+                <div class="h-64">
+                      <canvas id="factorWeightsChart"></canvas>
+                </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+          // Clear previous forecast if exists
+          const existingForecast = document.querySelector(
+            ".credit-score-forecast"
+          );
+          if (existingForecast) {
+            existingForecast.remove();
+          }
+
+          // Add forecast section after recommendations
+          const container = document.getElementById("factors-breakdown");
+          if (!container) {
+            console.error("Could not find factors-breakdown container");
+            return;
+          }
+          container.insertAdjacentHTML("beforeend", forecastHTML);
+
+          // Initialize charts with delay to ensure canvas elements are ready
+          setTimeout(() => {
+            try {
+              initializeCharts(scenarios, score);
+            } catch (error) {
+              console.error("Error initializing charts:", error);
+            }
+          }, 100);
+        } catch (error) {
+          console.error("Error in displayCreditScoreForecast:", error);
+        }
+      }
+
+      function initializeCharts(scenarios, currentScore) {
+        // Main Forecast Chart
+        const forecastCtx = document.getElementById("forecastChart");
+        if (forecastCtx) {
+          new Chart(forecastCtx, {
+            type: "line",
+            data: {
+              labels: ["Current", "3 Months", "6 Months", "12 Months"],
+              datasets: [
+                {
+                  label: "Optimal Path",
+                  data: [
+                    currentScore,
+                    scenarios.optimal.threeMonths,
+                    scenarios.optimal.sixMonths,
+                    scenarios.optimal.twelveMonths,
+                  ],
+                  borderColor: "rgb(34, 197, 94)",
+                  backgroundColor: "rgba(34, 197, 94, 0.1)",
+                  tension: 0.4,
+                },
+                {
+                  label: "Moderate Progress",
+                  data: [
+                    currentScore,
+                    scenarios.moderate.threeMonths,
+                    scenarios.moderate.sixMonths,
+                    scenarios.moderate.twelveMonths,
+                  ],
+                  borderColor: "rgb(234, 179, 8)",
+                  backgroundColor: "rgba(234, 179, 8, 0.1)",
+                  tension: 0.4,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                tooltip: {
+                  mode: "index",
+                  intersect: false,
+                  callbacks: {
+                    label: function (context) {
+                      return `Score: ${context.raw}`;
+                    },
+                  },
+                },
+                legend: {
+                  position: "bottom",
+                },
+              },
+              scales: {
+                y: {
+                  min: Math.max(300, currentScore - 50),
+                  max: Math.min(850, currentScore + 100),
+                  title: {
+                    display: true,
+                    text: "Credit Score",
+                  },
+                },
+              },
+            },
+          });
+        }
+
+        // Factor Weights Chart
+        const factorCtx = document.getElementById("factorWeightsChart");
+        if (factorCtx) {
+          new Chart(factorCtx, {
+            type: "doughnut",
+            data: {
+              labels: [
+                "Payment History",
+                "Credit Utilization",
+                "Length of Credit",
+                "Credit Mix",
+                "New Credit",
+              ],
+              datasets: [
+                {
+                  data: [35, 30, 15, 10, 10],
+                  backgroundColor: [
+                    "rgba(34, 197, 94, 0.7)",
+                    "rgba(59, 130, 246, 0.7)",
+                    "rgba(168, 85, 247, 0.7)",
+                    "rgba(234, 179, 8, 0.7)",
+                    "rgba(239, 68, 68, 0.7)",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `${context.label}: ${context.raw}%`;
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+      }
+
+      // Update the event handler for credit score inputs
+      document.addEventListener("DOMContentLoaded", function () {
+        const inputs = [
+          "current-score",
+          "credit-utilization",
+          "recent-applications",
+          "account-age",
+        ];
+
+        inputs.forEach((id) => {
+          const input = document.getElementById(id);
+          if (input) {
+            input.addEventListener("change", function () {
+              try {
+                updateDetailedCreditImpact();
+              } catch (error) {
+                console.error(`Error updating credit impact for ${id}:`, error);
+              }
+            });
+          }
+        });
+      });
+
+      // Add generatePDF function before the existing script content
+      async function generatePDF() {
+        const opt = {
+          margin: 10,
+          filename: "credit-impact-report.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: true,
+            letterRendering: true,
+            allowTaint: true,
+            foreignObjectRendering: true,
+            backgroundColor: "#ffffff",
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        try {
+          // Get and validate elements
+          const downloadBtn = document.getElementById("downloadPdfBtn");
+          const content = document.querySelector(".report-content");
+
+          if (!downloadBtn || !content) {
+            throw new Error("Required elements not found");
+          }
+
+          // Store original button state
+          const originalText = downloadBtn.innerHTML;
+          downloadBtn.innerHTML = "Generating PDF...";
+          downloadBtn.disabled = true;
+
+          // Wait for charts to be fully rendered
+          const charts = content.querySelectorAll("canvas");
+          if (charts.length > 0) {
+            // Give charts a moment to finish rendering
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+
+          // Create a deep clone of the content to avoid modifying the original
+          const contentClone = content.cloneNode(true);
+
+          // Convert charts to images in the clone
+          const chartPromises = Array.from(
+            contentClone.querySelectorAll("canvas")
+          ).map(async (canvas) => {
+            try {
+              const originalCanvas = content.querySelector(
+                `canvas#${canvas.id}`
+              );
+              if (!originalCanvas) return;
+
+              const img = document.createElement("img");
+              img.src = originalCanvas.toDataURL("image/png");
+              img.style.maxWidth = "100%";
+              img.style.height = "auto";
+              canvas.parentNode.replaceChild(img, canvas);
+            } catch (e) {
+              console.warn("Failed to convert chart to image:", e);
+            }
+          });
+
+          // Wait for all chart conversions
+          await Promise.all(chartPromises);
+
+          // Generate PDF
+          await html2pdf().set(opt).from(contentClone).save();
+
+          // Reset button state
+          downloadBtn.innerHTML = originalText;
+          downloadBtn.disabled = false;
+        } catch (error) {
+          console.error("PDF Generation Error:", error);
+
+          // Reset button state
+          const downloadBtn = document.getElementById("downloadPdfBtn");
+          if (downloadBtn) {
+            downloadBtn.innerHTML = "Download PDF";
+            downloadBtn.disabled = false;
+          }
+
+          // Show detailed error to user
+          alert(
+            `Failed to generate PDF: ${error.message}. Please ensure all charts are loaded and try again.`
+          );
+        }
+      }
+
+      // Ensure html2pdf is loaded and initialize
+      document.addEventListener("DOMContentLoaded", function () {
+        if (typeof html2pdf === "undefined") {
+          console.error("html2pdf library not loaded");
+          const downloadBtn = document.getElementById("downloadPdfBtn");
+          if (downloadBtn) {
+            downloadBtn.disabled = true;
+            downloadBtn.title =
+              "PDF generation not available - html2pdf library missing";
+          }
+          return;
+        }
+
+        // Initialize PDF download button
+        const downloadBtn = document.getElementById("downloadPdfBtn");
+        if (downloadBtn) {
+          downloadBtn.disabled = false;
+          downloadBtn.title = "Download Credit Score Report as PDF";
+        }
+      });
+    </script>
+  </body>
+</html>
